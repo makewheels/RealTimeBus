@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case WHAT_PARSE_BUS_JSON:
-                    Log.e(TAG, "im ran....");
                     List<BusPositionResult> busPositionResultList =
                             JSON.parseArray((String) msg.obj, BusPositionResult.class);
                     //解析出距离最近的公交
@@ -90,12 +89,12 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     String json = HttpUtil.get("http://116.62.123.9/gongjiaoluxian/xianlu50b.php");
-                    Message message = new Message();
+                    Message message = Message.obtain();
                     message.what = WHAT_PARSE_BUS_JSON;
                     message.obj = json;
                     handler.sendMessage(message);
                 }
-            };
+            }.start();
         }
     }
 
