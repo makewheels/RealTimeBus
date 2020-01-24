@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.TextView;
@@ -14,17 +16,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.alibaba.fastjson.JSON;
+import com.amap.api.maps.AMapUtils;
+import com.amap.api.maps.model.LatLng;
 import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 
+import java.util.List;
+
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int BAIDU_READ_PHONE_STATE = 100;//定位权限请求
-    private static final int PRIVATE_CODE = 1315;//开启GPS权限
+    private static final int BAIDU_READ_PHONE_STATE = 100;
+    private static final int PRIVATE_CODE = 1315;
 
     private String TAG = "tag";
     private TextView tv_distance;
@@ -32,13 +39,63 @@ public class MainActivity extends AppCompatActivity {
     public LocationClient mLocationClient = null;
     private MyLocationListener myListener = new MyLocationListener();
 
+    private final static int WHAT_PARSE_BUS_JSON = 1;
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case WHAT_PARSE_BUS_JSON:
+                    Log.e(TAG, "im ran....");
+                    List<BusPositionResult> busPositionResultList =
+                            JSON.parseArray((String) msg.obj, BusPositionResult.class);
+                    //解析出距离最近的公交
+                    for (BusPositionResult busPositionResult : busPositionResultList) {
+                        //我先把所有的距离都计算出来，放到结果对象中
+                        double buslat = Double.parseDouble(busPositionResult.getLat());
+                        double buslng = Double.parseDouble(busPositionResult.getLng());
+                        double distance = (double) AMapUtils.calculateLineDistance(
+                                new LatLng(mylatitude, mylongitude), new LatLng(buslat, buslng));
+                        busPositionResult.setDistance(distance);
+                    }
+                    //这是最小的索引
+                    int minIndex = 0;
+                    //然后我再遍历一次，找最小值
+                    for (int i = 0; i < busPositionResultList.size(); i++) {
+                        if (busPositionResultList.get(i).getDistance()
+                                < busPositionResultList.get(minIndex).getDistance()) {
+                            minIndex = i;
+                        }
+                    }
+                    //这回可以拿到最小的距离了
+                    double minDistance = busPositionResultList.get(minIndex).getDistance();
+                    //显示距离
+                    tv_distance.setText(minDistance + "");
+                    Log.e(TAG, "minDistance = " + minDistance);
+            }
+        }
+    };
+
+    double mylatitude;
+    double mylongitude;
+
     public class MyLocationListener extends BDAbstractLocationListener {
         @Override
         public void onReceiveLocation(BDLocation location) {
-            double latitude = location.getLatitude();
-            double longitude = location.getLongitude();
-            Log.e(TAG, latitude + ", " + longitude);
-            tv_distance.setText(latitude + ", \n" + longitude);
+            //获取我当前位置
+            mylatitude = location.getLatitude();
+            mylongitude = location.getLongitude();
+            Log.e(TAG, mylatitude + ", " + mylongitude);
+            //发请求获取公交信息
+            new Thread() {
+                @Override
+                public void run() {
+                    String json = HttpUtil.get("http://116.62.123.9/gongjiaoluxian/xianlu50b.php");
+                    Message message = new Message();
+                    message.what = WHAT_PARSE_BUS_JSON;
+                    message.obj = json;
+                    handler.sendMessage(message);
+                }
+            };
         }
     }
 
