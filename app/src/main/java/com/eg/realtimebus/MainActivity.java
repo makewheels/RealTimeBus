@@ -1,10 +1,7 @@
 package com.eg.realtimebus;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
-import android.location.Criteria;
-import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +14,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.baidu.location.BDAbstractLocationListener;
+import com.baidu.location.BDLocation;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
+
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class MainActivity extends AppCompatActivity {
@@ -24,15 +26,47 @@ public class MainActivity extends AppCompatActivity {
     private static final int BAIDU_READ_PHONE_STATE = 100;//定位权限请求
     private static final int PRIVATE_CODE = 1315;//开启GPS权限
 
+    private String TAG = "tag";
     private TextView tv_distance;
+
+    public LocationClient mLocationClient = null;
+    private MyLocationListener myListener = new MyLocationListener();
+
+    public class MyLocationListener extends BDAbstractLocationListener {
+        @Override
+        public void onReceiveLocation(BDLocation location) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            Log.e(TAG, latitude + ", " + longitude);
+            tv_distance.setText(latitude + ", \n" + longitude);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         tv_distance = findViewById(R.id.tv_distance);
-        showGPSContacts();
+
+        check();
+
+        mLocationClient = new LocationClient(getApplicationContext());
+        mLocationClient.registerLocationListener(myListener);
+
+        LocationClientOption option = new LocationClientOption();
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+        option.setCoorType("bd09ll");
+        option.setScanSpan(1000);
+        option.setOpenGps(true);
+        option.setLocationNotify(true);
+        option.setIgnoreKillProcess(false);
+        option.SetIgnoreCacheException(false);
+        option.setWifiCacheTimeOut(5 * 60 * 1000);
+        option.setEnableSimulateGps(false);
+        mLocationClient.setLocOption(option);
+        mLocationClient.start();
     }
 
     LocationManager lm;
@@ -40,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 检测GPS、位置权限是否开启
      */
-    private void showGPSContacts() {
+    private void check() {
         lm = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
         boolean ok = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (ok) {//开了定位服务
@@ -70,46 +104,7 @@ public class MainActivity extends AppCompatActivity {
      * 获取具体位置的经纬度
      */
     private void getLocation() {
-        // 获取位置管理服务
-        LocationManager locationManager;
-        String serviceName = Context.LOCATION_SERVICE;
-        locationManager = (LocationManager) this.getSystemService(serviceName);
-        // 查找到服务信息
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE); // 高精度
-        criteria.setAltitudeRequired(false);
-        criteria.setBearingRequired(false);
-        criteria.setCostAllowed(true);
-        criteria.setPowerRequirement(Criteria.POWER_LOW); // 低功耗
-        String provider = locationManager.getBestProvider(criteria, true); // 获取GPS信息
-        /**这段代码不需要深究，是locationManager.getLastKnownLocation(provider)自动生成的，不加会出错**/
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location location = locationManager.getLastKnownLocation(provider); // 通过GPS获取位置
-        updateLocation(location);
-    }
 
-    /**
-     * 获取到当前位置的经纬度
-     *
-     * @param location
-     */
-    private void updateLocation(Location location) {
-        if (location != null) {
-            double latitude = location.getLatitude();
-            double longitude = location.getLongitude();
-            Log.e("tag", "维度：" + latitude + "\n经度" + longitude);
-        } else {
-            Log.e("tag", "无法获取到位置信息");
-        }
     }
 
     /**
@@ -126,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     // 获取到权限，作相应处理
                     getLocation();
                 } else {
-                    showGPSContacts();
+                    check();
                 }
                 break;
             default:
