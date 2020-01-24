@@ -24,6 +24,7 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
@@ -52,8 +53,10 @@ public class MainActivity extends AppCompatActivity {
                         //我先把所有的距离都计算出来，放到结果对象中
                         double buslat = Double.parseDouble(busPositionResult.getLat());
                         double buslng = Double.parseDouble(busPositionResult.getLng());
+                        Log.e(TAG, "bus: " + buslat + ", " + buslng);
+                        Log.e(TAG, "my: " + mylatitude + ", " + mylongitude);
                         double distance = (double) AMapUtils.calculateLineDistance(
-                                new LatLng(mylatitude, mylongitude), new LatLng(buslat, buslng));
+                                new LatLng(mylatitude, mylongitude), new LatLng(buslng, buslat));
                         busPositionResult.setDistance(distance);
                     }
                     //这是最小的索引
@@ -67,9 +70,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                     //这回可以拿到最小的距离了
                     double minDistance = busPositionResultList.get(minIndex).getDistance();
+                    DecimalFormat decimalFormat = new DecimalFormat("0.00");
                     //显示距离
-                    tv_distance.setText(minDistance + "");
-                    Log.e(TAG, "minDistance = " + minDistance);
+                    tv_distance.setText(decimalFormat.format(minDistance));
+                    Log.e(TAG, "minDistance = " + decimalFormat.format(minDistance));
             }
         }
     };
@@ -83,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
             //获取我当前位置
             mylatitude = location.getLatitude();
             mylongitude = location.getLongitude();
-            Log.e(TAG, mylatitude + ", " + mylongitude);
             //发请求获取公交信息
             new Thread() {
                 @Override
@@ -114,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         LocationClientOption option = new LocationClientOption();
         option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
         option.setCoorType("bd09ll");
-        option.setScanSpan(1000);
+        option.setScanSpan(2000);
         option.setOpenGps(true);
         option.setLocationNotify(true);
         option.setIgnoreKillProcess(false);
