@@ -1,4 +1,4 @@
-package com.eg.realtimebus;
+package com.eg.realtimebus.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

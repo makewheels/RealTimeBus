@@ -1,4 +1,4 @@
-package com.eg.realtimebus;
+package com.eg.realtimebus.activity.location;
 
 public class BusPositionResult {
     private String id;

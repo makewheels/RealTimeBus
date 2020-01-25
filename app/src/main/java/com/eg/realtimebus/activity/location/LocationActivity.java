@@ -1,4 +1,4 @@
-package com.eg.realtimebus;
+package com.eg.realtimebus.activity.location;
 
 import android.Manifest;
 import android.content.Intent;
@@ -23,13 +23,15 @@ import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
+import com.eg.realtimebus.R;
+import com.eg.realtimebus.util.HttpUtil;
 
 import java.text.DecimalFormat;
 import java.util.List;
 
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity {
+public class LocationActivity extends AppCompatActivity {
 
     private static final int BAIDU_READ_PHONE_STATE = 100;
     private static final int PRIVATE_CODE = 1315;
