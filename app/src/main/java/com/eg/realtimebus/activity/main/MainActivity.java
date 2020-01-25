@@ -1,12 +1,15 @@
 package com.eg.realtimebus.activity.main;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SearchView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_enter);
+        setContentView(R.layout.activity_main);
 
         sv_search = findViewById(R.id.sv_search);
         rv_busList = findViewById(R.id.rv_busList);
@@ -39,35 +42,29 @@ public class MainActivity extends AppCompatActivity {
         commonBusList.add("11");
         commonBusList.add("22");
         rv_busList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        rv_busList.setAdapter(new BusListAdapter(commonBusList));
+        rv_busList.setAdapter(new BusListAdapter(this, commonBusList));
     }
 
-    public class BusListAdapter extends RecyclerView.Adapter<BusListAdapter.ViewHolder> {
+    public class BusListAdapter extends RecyclerView.Adapter<BusListAdapter.MyViewHolder> {
+        private Context context;
         private List<String> commonBusList;
-        private RecyclerView.ViewHolder holder;
-        private int position;
 
-        public BusListAdapter(List<String> commonBusList) {
+        public BusListAdapter(Context context, List<String> commonBusList) {
+            this.context = context;
             this.commonBusList = commonBusList;
         }
 
         @NonNull
         @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return null;
+        public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new MyViewHolder(View.inflate(context, R.layout.item_commonbus, null));
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-
-        }
-
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
-            this.holder = holder;
-            this.position = position;
+        public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+            if (holder.tv_bus == null)
+                Log.e("tag", "awegawg4e");
+            holder.tv_bus.setText(commonBusList.get(position));
         }
 
         @Override
@@ -75,10 +72,12 @@ public class MainActivity extends AppCompatActivity {
             return commonBusList.size();
         }
 
-        class ViewHolder extends RecyclerView.ViewHolder {
+        class MyViewHolder extends RecyclerView.ViewHolder {
+            private TextView tv_bus;
 
-            public ViewHolder(@NonNull View itemView) {
+            public MyViewHolder(@NonNull View itemView) {
                 super(itemView);
+                this.tv_bus = findViewById(R.id.tv_bus);
             }
         }
     }

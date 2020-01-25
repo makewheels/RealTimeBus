@@ -107,7 +107,7 @@ public class LocationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_location);
 
         tv_distance = findViewById(R.id.tv_distance);
 
