@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +38,7 @@ public class LocationActivity extends AppCompatActivity {
     private String TAG = "tag";
     private TextView tv_distance;
 
-    public LocationClient mLocationClient = null;
+    private LocationClient mLocationClient = null;
     private MyLocationListener myListener = new MyLocationListener();
 
     private final static int WHAT_PARSE_BUS_JSON = 1;
@@ -50,13 +49,16 @@ public class LocationActivity extends AppCompatActivity {
                 case WHAT_PARSE_BUS_JSON:
                     List<BusPositionResult> busPositionResultList =
                             JSON.parseArray((String) msg.obj, BusPositionResult.class);
+                    //如果现在没有公交
+                    if (busPositionResultList.size() == 0) {
+                        tv_distance.setText(R.string.no_bus_right_now);
+                        return;
+                    }
                     //解析出距离最近的公交
                     for (BusPositionResult busPositionResult : busPositionResultList) {
                         //我先把所有的距离都计算出来，放到结果对象中
                         double buslat = Double.parseDouble(busPositionResult.getLat());
                         double buslng = Double.parseDouble(busPositionResult.getLng());
-                        Log.e(TAG, "bus: " + buslat + ", " + buslng);
-                        Log.e(TAG, "my: " + mylatitude + ", " + mylongitude);
                         double distance = (double) AMapUtils.calculateLineDistance(
                                 new LatLng(mylatitude, mylongitude), new LatLng(buslng, buslat));
                         busPositionResult.setDistance(distance);
@@ -74,14 +76,13 @@ public class LocationActivity extends AppCompatActivity {
                     double minDistance = busPositionResultList.get(minIndex).getDistance();
                     DecimalFormat decimalFormat = new DecimalFormat("0.00");
                     //显示距离
-                    tv_distance.setText(decimalFormat.format(minDistance));
-                    Log.e(TAG, "minDistance = " + decimalFormat.format(minDistance));
+                    tv_distance.setText(decimalFormat.format(minDistance) + " m");
             }
         }
     };
 
-    double mylatitude;
-    double mylongitude;
+    private double mylatitude;
+    private double mylongitude;
 
     public class MyLocationListener extends BDAbstractLocationListener {
         @Override
@@ -110,6 +111,9 @@ public class LocationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_location);
 
         tv_distance = findViewById(R.id.tv_distance);
+
+        Intent intent = getIntent();
+        String busName = intent.getStringExtra("busName");
 
         check();
 

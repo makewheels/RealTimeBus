@@ -1,8 +1,8 @@
 package com.eg.realtimebus.activity.main;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
@@ -10,10 +10,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.eg.realtimebus.R;
+import com.eg.realtimebus.activity.location.LocationActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +43,11 @@ public class MainActivity extends AppCompatActivity {
         commonBusList.add("810");
         commonBusList.add("11");
         commonBusList.add("22");
+        //垂直线性布局
         rv_busList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        //分割线
+        rv_busList.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        //内容适配器
         rv_busList.setAdapter(new BusListAdapter(this, commonBusList));
     }
 
@@ -62,9 +68,17 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-            if (holder.tv_bus == null)
-                Log.e("tag", "awegawg4e");
             holder.tv_bus.setText(commonBusList.get(position));
+            holder.tv_bus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    TextView textView = (TextView) v;
+                    String busName = textView.getText().toString();
+                    Intent intent = new Intent(MainActivity.this, LocationActivity.class);
+                    intent.putExtra("busName", busName);
+                    startActivity(intent);
+                }
+            });
         }
 
         @Override
@@ -73,11 +87,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         class MyViewHolder extends RecyclerView.ViewHolder {
-            private TextView tv_bus;
+            TextView tv_bus;
 
             public MyViewHolder(@NonNull View itemView) {
                 super(itemView);
-                this.tv_bus = findViewById(R.id.tv_bus);
+                this.tv_bus = itemView.findViewById(R.id.tv_bus);
             }
         }
     }

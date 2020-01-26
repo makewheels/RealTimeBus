@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">实时公交</string>
+    <string name="search_bus">搜索公交</string>
+    <string name="no_bus_right_now">木有公交！</string>
+    <string name="bus_name">公交</string>
+    <string name="bus_location">公交位置</string>
 </resources>

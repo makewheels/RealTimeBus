@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">RealTimeBus</string>
+    <string name="search_bus">search bus</string>
+    <string name="no_bus_right_now">No bus right now!</string>
+    <string name="bus_name">Bus Name</string>
+    <string name="bus_location">Bus Location</string>
 </resources>
