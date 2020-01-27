@@ -106,7 +106,6 @@ public class LocationActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location);
 
@@ -132,16 +131,17 @@ public class LocationActivity extends AppCompatActivity {
         option.setEnableSimulateGps(false);
         mLocationClient.setLocOption(option);
         mLocationClient.start();
+
     }
 
-    LocationManager lm;
+    private LocationManager locationManager;
 
     /**
      * 检测GPS、位置权限是否开启
      */
     private void check() {
-        lm = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
-        boolean ok = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
+        boolean ok = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (ok) {//开了定位服务
             if (Build.VERSION.SDK_INT >= 23) { //判断是否为android6.0系统版本，如果是，需要动态添加权限
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -171,7 +171,6 @@ public class LocationActivity extends AppCompatActivity {
     private void getLocation() {
 
     }
-
     /**
      * Android6.0申请权限的回调方法
      */
