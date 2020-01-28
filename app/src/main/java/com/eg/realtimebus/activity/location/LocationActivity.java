@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,8 +18,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.alibaba.fastjson.JSON;
-import com.amap.api.maps.AMapUtils;
-import com.amap.api.maps.model.LatLng;
 import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
@@ -27,63 +27,49 @@ import com.eg.realtimebus.util.Constants;
 import com.eg.realtimebus.util.HttpUtil;
 
 import java.text.DecimalFormat;
-import java.util.List;
 
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
 public class LocationActivity extends AppCompatActivity {
+    private String TAG = "tag";
+
+    private TextView tv_distance;
+    private TextView tv_stationName;
+    private TextView tv_busName;
+    private Button btn_changeDirection;
+    private TextView tv_startStation;
+    private TextView tv_endStation;
 
     private static final int BAIDU_READ_PHONE_STATE = 100;
     private static final int PRIVATE_CODE = 1315;
-
-    private String TAG = "tag";
-    private TextView tv_distance;
-
     private LocationClient mLocationClient = null;
     private MyLocationListener myListener = new MyLocationListener();
+    private LocationManager locationManager;
+    private double mylatitude;
+    private double mylongitude;
 
-    private final static int WHAT_PARSE_BUS_JSON = 1;
+    private String busName;
+    private String direction = "a";
+
+    private final static int WHAT_BUS_DISTANCE = 1;
+
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case WHAT_PARSE_BUS_JSON:
-                    List<BusPositionResult> busPositionResultList =
-                            JSON.parseArray((String) msg.obj, BusPositionResult.class);
-                    //如果现在没有公交
-                    if (busPositionResultList.size() == 0) {
+                case WHAT_BUS_DISTANCE:
+                    DistanceResponse distanceResponse = JSON.parseObject((String) msg.obj, DistanceResponse.class);
+                    //如果没车
+                    if (distanceResponse.isHasBus() == false) {
                         tv_distance.setText(R.string.no_bus_right_now);
                         return;
                     }
-                    //解析出距离最近的公交
-                    for (BusPositionResult busPositionResult : busPositionResultList) {
-                        //我先把所有的距离都计算出来，放到结果对象中
-                        double buslat = Double.parseDouble(busPositionResult.getLat());
-                        double buslng = Double.parseDouble(busPositionResult.getLng());
-                        double distance = (double) AMapUtils.calculateLineDistance(
-                                new LatLng(mylatitude, mylongitude), new LatLng(buslng, buslat));
-                        busPositionResult.setDistance(distance);
-                    }
-                    //这是最小的索引
-                    int minIndex = 0;
-                    //然后我再遍历一次，找最小值
-                    for (int i = 0; i < busPositionResultList.size(); i++) {
-                        if (busPositionResultList.get(i).getDistance()
-                                < busPositionResultList.get(minIndex).getDistance()) {
-                            minIndex = i;
-                        }
-                    }
-                    //这回可以拿到最小的距离了
-                    double minDistance = busPositionResultList.get(minIndex).getDistance();
+                    //如果有车，显示距离
                     DecimalFormat decimalFormat = new DecimalFormat("0.00");
-                    //显示距离
-                    tv_distance.setText(decimalFormat.format(minDistance) + " m");
+                    tv_distance.setText(decimalFormat.format(distanceResponse.getDistance()) + " m");
             }
         }
     };
-
-    private double mylatitude;
-    private double mylongitude;
 
     public class MyLocationListener extends BDAbstractLocationListener {
         @Override
@@ -91,13 +77,15 @@ public class LocationActivity extends AppCompatActivity {
             //获取我当前位置
             mylatitude = location.getLatitude();
             mylongitude = location.getLongitude();
-            //发请求获取公交信息
+            //发请求获取公交位置
             new Thread() {
                 @Override
                 public void run() {
-                    String json = HttpUtil.get(Constants.BASE_URL + "/gongjiaoluxian/xianlu50b.php");
+                    String json = HttpUtil.get(Constants.BASE_URL
+                            + "/bus/getDistance?position=" + mylatitude + ","
+                            + mylongitude + "&busName=" + busName + "&direction=" + direction);
                     Message message = Message.obtain();
-                    message.what = WHAT_PARSE_BUS_JSON;
+                    message.what = WHAT_BUS_DISTANCE;
                     message.obj = json;
                     handler.sendMessage(message);
                 }
@@ -111,11 +99,15 @@ public class LocationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_location);
 
         tv_distance = findViewById(R.id.tv_distance);
+        tv_stationName = findViewById(R.id.tv_stationName);
+        tv_busName = findViewById(R.id.tv_busName);
+        btn_changeDirection = findViewById(R.id.btn_changeDirection);
+        tv_startStation = findViewById(R.id.tv_startStation);
+        tv_endStation = findViewById(R.id.tv_endStation);
 
-        Intent intent = getIntent();
-        String busName = intent.getStringExtra("busName");
+        initView();
 
-        check();
+        checkPermission();
 
         mLocationClient = new LocationClient(getApplicationContext());
         mLocationClient.registerLocationListener(myListener);
@@ -129,18 +121,41 @@ public class LocationActivity extends AppCompatActivity {
         option.setIgnoreKillProcess(false);
         option.SetIgnoreCacheException(false);
         option.setWifiCacheTimeOut(5 * 60 * 1000);
-        option.setEnableSimulateGps(false);
+        option.setEnableSimulateGps(true);
         mLocationClient.setLocOption(option);
         mLocationClient.start();
 
     }
 
-    private LocationManager locationManager;
+    /**
+     * 监听器
+     */
+    private void initView() {
+        //公交名
+        Intent intent = getIntent();
+        busName = intent.getStringExtra("busName");
+        tv_busName.setText(busName);
+        //换向按钮
+        btn_changeDirection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (busName.startsWith("h") == false) {
+                    if (direction == "a") {
+                        direction = "b";
+                    } else {
+                        direction = "a";
+                    }
+                } else {
+                    //不支持换向
+                }
+            }
+        });
+    }
 
     /**
      * 检测GPS、位置权限是否开启
      */
-    private void check() {
+    private void checkPermission() {
         locationManager = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
         boolean ok = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if (ok) {//开了定位服务
@@ -188,7 +203,7 @@ public class LocationActivity extends AppCompatActivity {
                     getLocation();
                 } else {
                     //如果没拿到权限
-                    check();
+                    checkPermission();
                 }
                 break;
             default:

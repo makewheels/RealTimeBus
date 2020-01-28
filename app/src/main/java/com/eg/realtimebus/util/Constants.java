@@ -1,6 +1,6 @@
 package com.eg.realtimebus.util;
 
 public class Constants {
-    public static String BASE_URL = "http://116.62.123.9";
-    public static String BUS_BASE_URL = "";
+    public static String BASE_URL = "http://192.168.99.193";
+//    public static String BASE_URL = "http://106.12.57.49";
 }
