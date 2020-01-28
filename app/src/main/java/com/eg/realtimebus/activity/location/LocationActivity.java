@@ -23,6 +23,7 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.eg.realtimebus.R;
+import com.eg.realtimebus.util.Constants;
 import com.eg.realtimebus.util.HttpUtil;
 
 import java.text.DecimalFormat;
@@ -94,7 +95,7 @@ public class LocationActivity extends AppCompatActivity {
             new Thread() {
                 @Override
                 public void run() {
-                    String json = HttpUtil.get("http://116.62.123.9/gongjiaoluxian/xianlu50b.php");
+                    String json = HttpUtil.get(Constants.BASE_URL + "/gongjiaoluxian/xianlu50b.php");
                     Message message = Message.obtain();
                     message.what = WHAT_PARSE_BUS_JSON;
                     message.obj = json;
@@ -171,6 +172,7 @@ public class LocationActivity extends AppCompatActivity {
     private void getLocation() {
 
     }
+
     /**
      * Android6.0申请权限的回调方法
      */
@@ -185,6 +187,7 @@ public class LocationActivity extends AppCompatActivity {
                     // 获取到权限，作相应处理
                     getLocation();
                 } else {
+                    //如果没拿到权限
                     check();
                 }
                 break;
