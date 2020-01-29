@@ -6,4 +6,5 @@
     <string name="no_bus_right_now">木有公交！</string>
     <string name="search_bus">搜索公交</string>
     <string name="change_direction">換向</string>
+    <string name="time_table">發車時刻表</string>
 </resources>

@@ -6,4 +6,5 @@
     <string name="bus_name">公交</string>
     <string name="bus_location">实时距离</string>
     <string name="change_direction">换向</string>
+    <string name="time_table">发车时刻表</string>
 </resources>

@@ -23,6 +23,7 @@ import com.baidu.location.BDLocation;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.eg.realtimebus.R;
+import com.eg.realtimebus.activity.timetable.TimeTableActivity;
 import com.eg.realtimebus.util.Constants;
 import com.eg.realtimebus.util.HttpUtil;
 
@@ -39,6 +40,7 @@ public class LocationActivity extends AppCompatActivity {
     private Button btn_changeDirection;
     private TextView tv_startStation;
     private TextView tv_endStation;
+    private Button btn_timeTable;
 
     private static final int BAIDU_READ_PHONE_STATE = 100;
     private static final int PRIVATE_CODE = 1315;
@@ -104,6 +106,7 @@ public class LocationActivity extends AppCompatActivity {
         btn_changeDirection = findViewById(R.id.btn_changeDirection);
         tv_startStation = findViewById(R.id.tv_startStation);
         tv_endStation = findViewById(R.id.tv_endStation);
+        btn_timeTable = findViewById(R.id.btn_timeTable);
 
         initView();
 
@@ -132,8 +135,7 @@ public class LocationActivity extends AppCompatActivity {
      */
     private void initView() {
         //公交名
-        Intent intent = getIntent();
-        busName = intent.getStringExtra("busName");
+        busName = getIntent().getStringExtra("busName");
         tv_busName.setText(busName);
         //换向按钮
         btn_changeDirection.setOnClickListener(new View.OnClickListener() {
@@ -148,6 +150,16 @@ public class LocationActivity extends AppCompatActivity {
                 } else {
                     //不支持换向
                 }
+            }
+        });
+        //时刻表按钮
+        btn_timeTable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LocationActivity.this, TimeTableActivity.class);
+                intent.putExtra("busName", busName);
+                intent.putExtra("direction", direction);
+                startActivity(intent);
             }
         });
     }
@@ -197,8 +209,9 @@ public class LocationActivity extends AppCompatActivity {
         switch (requestCode) {
             // requestCode即所声明的权限获取码，在checkSelfPermission时传入
             case BAIDU_READ_PHONE_STATE:
-                //如果用户取消，permissions可能为null.
-                if (grantResults[0] == PERMISSION_GRANTED && grantResults.length > 0) {  //有权限
+                //如果用户取消，permissions可能为null
+                //如果有权限
+                if (grantResults[0] == PERMISSION_GRANTED && grantResults.length > 0) {
                     // 获取到权限，作相应处理
                     getLocation();
                 } else {
